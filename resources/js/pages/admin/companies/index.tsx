@@ -1,172 +1,163 @@
-import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
-import { Plus, Search } from 'lucide-react';
-import type { FormEvent } from 'react';
-import { PageHeader } from '@/components/admin/page-header';
+import { useState } from 'react';
+import { Head, Link } from '@inertiajs/react';
+import { Plus, EllipsisVertical, ShieldAlert, LifeBuoy, User, SquarePen, KeyRound, LogIn, Monitor, Trash2, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Container } from '@/components/common/container';
+import { Toolbar, ToolbarActions, ToolbarHeading } from '@/layouts/demo1/components/toolbar';
+import { DynamicTable } from '@/components/common/dynamic-table';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
-type CompanyRow = {
-    id: number;
-    company_name: string;
-    company_code: string;
-    email: string;
-    mobile: string;
-    status: number;
-    company_products_count: number;
-    created_at: string;
-};
+export default function Index({ companies, filters, statusOptions }: any) {
+    const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
-type PaginatedCompanies = {
-    data: CompanyRow[];
-    current_page: number;
-    last_page: number;
-    per_page: number;
-    total: number;
-    links: Array<{ url: string | null; label: string; active: boolean }>;
-};
-
-type Props = {
-    companies: PaginatedCompanies;
-    filters: { search: string; status: string | number | null };
-    statusOptions: Array<{ value: number; label: string }>;
-};
-
-function statusLabel(status: number, options: Props['statusOptions']): string {
-    return options.find((option) => option.value === status)?.label ?? String(status);
-}
-
-export default function AdminCompaniesIndex({ companies, filters, statusOptions }: Props) {
-    const page = usePage<{ flash?: { success?: string } }>();
-    const form = useForm({
-        search: filters.search ?? '',
-        status: filters.status?.toString() ?? '',
-    });
-
-    const submitSearch = (event: FormEvent) => {
-        event.preventDefault();
-        form.get('/admin/companies', {
-            preserveState: true,
-            replace: true,
-        });
+    const handleSelectAll = (checked: boolean) => {
+        if (checked) {
+            setSelectedIds(companies?.data?.map((c: any) => c.id) || []);
+        } else {
+            setSelectedIds([]);
+        }
     };
+
+    const handleSelect = (id: number, checked: boolean) => {
+        if (checked) {
+            setSelectedIds((prev) => [...prev, id]);
+        } else {
+            setSelectedIds((prev) => prev.filter((selectedId) => selectedId !== id));
+        }
+    };
+
+    const isAllSelected = companies?.data?.length > 0 && selectedIds.length === companies?.data?.length;
+
+    const columns = [
+        {
+            key: 'select',
+            className: 'w-[50px] min-w-[50px] max-w-[50px] px-0 text-center',
+            header: (
+                <div className="flex items-center justify-center w-full h-full">
+                    <Checkbox 
+                        className="translate-y-[1px]" 
+                        checked={isAllSelected}
+                        onCheckedChange={handleSelectAll}
+                    />
+                </div>
+            ),
+            align: 'center',
+            hideable: false,
+            cell: (item: any) => (
+                <div className="flex items-center justify-center w-full h-full">
+                    <Checkbox 
+                        className="translate-y-[2px]" 
+                        checked={selectedIds.includes(item.id)}
+                        onCheckedChange={(c: boolean) => handleSelect(item.id, c)}
+                    />
+                </div>
+            ),
+        },
+        {
+            key: 'id',
+            header: '#',
+            align: 'center',
+            sortable: true,
+            cell: (_item: any, index: number) => <span className="text-muted-foreground font-medium">{index + 1}</span>,
+        },
+        { key: 'company_code', header: 'Code', sortable: true },
+        { 
+            key: 'company_name', 
+            header: 'Name', 
+            sortable: true,
+            cell: (item: any) => (
+                <Link href={`/admin/companies/${item.id}`} className="font-semibold text-primary hover:underline">
+                    {item.company_name}
+                </Link>
+            )
+        },
+        { key: 'email', header: 'Email', sortable: true },
+        { key: 'mobile', header: 'Mobile', sortable: true },
+        { 
+            key: 'status', 
+            header: 'Status',
+            cell: (item: any) => (
+                <span className={`px-2 py-1 rounded-full text-xs font-semibold ${item.status === 1 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                    {item.status === 1 ? 'Active' : 'Inactive'}
+                </span>
+            )
+        },
+        { key: 'plan_name', header: 'Plan', sortable: true, isDefault: false, className: 'whitespace-nowrap' },
+        { key: 'expires_at', header: 'Expired Date', sortable: true, isDefault: false, className: 'whitespace-nowrap' },
+        { key: 'usage_info', header: 'Used / Total', sortable: false, isDefault: false, className: 'whitespace-nowrap text-center', align: 'center' },
+        { key: 'created_at', header: 'Created At', sortable: true },
+        {
+            key: 'actions',
+            header: 'Action',
+            align: 'right',
+            hideable: false,
+            cell: (item: any) => (
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button mode="icon" variant="ghost" className="size-8">
+                            <EllipsisVertical className="size-4" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                        <DropdownMenuItem className="cursor-pointer gap-2"><ShieldAlert className="size-4" /> Update Access</DropdownMenuItem>
+                        <DropdownMenuItem className="cursor-pointer gap-2"><LifeBuoy className="size-4" /> Support Given</DropdownMenuItem>
+                        <DropdownMenuItem asChild className="cursor-pointer gap-2">
+                            <Link href={`/admin/companies/${item.id}`}>
+                                <User className="size-4" /> Profile
+                            </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem className="cursor-pointer gap-2"><SquarePen className="size-4" /> Update</DropdownMenuItem>
+                        <DropdownMenuItem className="cursor-pointer gap-2"><KeyRound className="size-4" /> Reset Password</DropdownMenuItem>
+                        <DropdownMenuItem className="cursor-pointer gap-2"><LogIn className="size-4" /> Login To Panel</DropdownMenuItem>
+                        <DropdownMenuItem className="cursor-pointer gap-2"><Monitor className="size-4" /> With All Access Login</DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem className="cursor-pointer gap-2 text-destructive" variant="destructive">
+                            <Trash2 className="size-4" /> Delete
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem className="cursor-pointer gap-2"><Send className="size-4" /> Resend SMS</DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            ),
+        },
+    ];
 
     return (
         <>
-            <Head title="Companies" />
-
-            <div className="space-y-6">
-                <PageHeader
-                    title="Companies"
-                    description="Create tenants and assign products (modules) to each company."
-                    actions={
-                        <Button asChild className="rounded-full bg-nexlink-primary text-white hover:bg-nexlink-primary-dark">
+            <Head title="Companies | Admin" />
+            
+            <Container>
+                <Toolbar>
+                    <ToolbarHeading
+                        title="Companies"
+                        description="Manage all onboarded companies in the system."
+                    />
+                    <ToolbarActions>
+                        <Button asChild className="gap-2 shadow-xs">
                             <Link href="/admin/companies/create">
                                 <Plus className="size-4" />
-                                Add company
+                                Add Company
                             </Link>
                         </Button>
-                    }
+                    </ToolbarActions>
+                </Toolbar>
+            </Container>
+
+            <Container>
+                <DynamicTable
+                    data={companies?.data || []}
+                    columns={columns}
+                    searchPlaceholder="Search companies..."
+                    exportFilename="companies"
                 />
-
-                {page.props.flash?.success && (
-                    <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200">
-                        {page.props.flash.success}
-                    </div>
-                )}
-
-                <form onSubmit={submitSearch} className="admin-card grid gap-4 p-4 sm:grid-cols-[1fr_180px_auto]">
-                    <div className="space-y-2">
-                        <Label htmlFor="search">Search</Label>
-                        <div className="relative">
-                            <Search className="pointer-events-none absolute top-2.5 left-3 size-4 text-slate-400" />
-                            <Input
-                                id="search"
-                                className="pl-9"
-                                value={form.data.search}
-                                onChange={(event) => form.setData('search', event.target.value)}
-                                placeholder="Name, code, or email"
-                            />
-                        </div>
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="status">Status</Label>
-                        <select
-                            id="status"
-                            className="border-input h-9 w-full rounded-md border bg-transparent px-3 text-sm"
-                            value={form.data.status}
-                            onChange={(event) => form.setData('status', event.target.value)}
-                        >
-                            <option value="">All</option>
-                            {statusOptions.map((option) => (
-                                <option key={option.value} value={option.value}>
-                                    {option.label}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                    <div className="flex items-end">
-                        <Button type="submit" variant="outline" className="w-full rounded-full">
-                            Filter
-                        </Button>
-                    </div>
-                </form>
-
-                <div className="admin-card overflow-hidden">
-                    <table className="min-w-full text-left text-sm">
-                        <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:border-white/10 dark:bg-white/5">
-                            <tr>
-                                <th className="px-4 py-3 font-semibold">Company</th>
-                                <th className="px-4 py-3 font-semibold">Code</th>
-                                <th className="px-4 py-3 font-semibold">Email</th>
-                                <th className="px-4 py-3 font-semibold">Products</th>
-                                <th className="px-4 py-3 font-semibold">Status</th>
-                                <th className="px-4 py-3 font-semibold" />
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {companies.data.length === 0 && (
-                                <tr>
-                                    <td colSpan={6} className="px-4 py-8 text-center text-slate-500">
-                                        No companies found.
-                                    </td>
-                                </tr>
-                            )}
-                            {companies.data.map((company) => (
-                                <tr key={company.id} className="border-b border-slate-100 dark:border-white/5">
-                                    <td className="px-4 py-3 font-medium text-slate-950 dark:text-white">
-                                        {company.company_name}
-                                    </td>
-                                    <td className="px-4 py-3">{company.company_code}</td>
-                                    <td className="px-4 py-3">{company.email}</td>
-                                    <td className="px-4 py-3">{company.company_products_count}</td>
-                                    <td className="px-4 py-3">{statusLabel(company.status, statusOptions)}</td>
-                                    <td className="px-4 py-3 text-right">
-                                        <Button asChild variant="ghost" size="sm">
-                                            <Link href={`/admin/companies/${company.id}`}>View</Link>
-                                        </Button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-
-                {companies.last_page > 1 && (
-                    <div className="flex flex-wrap gap-2">
-                        {companies.links.map((link, index) => (
-                            <Button
-                                key={`${link.label}-${index}`}
-                                variant={link.active ? 'default' : 'outline'}
-                                size="sm"
-                                disabled={!link.url}
-                                onClick={() => link.url && router.get(link.url, {}, { preserveState: true })}
-                                dangerouslySetInnerHTML={{ __html: link.label }}
-                            />
-                        ))}
-                    </div>
-                )}
-            </div>
+            </Container>
         </>
     );
 }

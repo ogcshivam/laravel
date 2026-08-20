@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
-use App\Models\Company;
+use App\Enums\RoleName;
+use App\Models\Auth\SuperAdmin;
+use App\Models\Company\Company;
 use App\Models\User;
 use App\Policies\CompanyPolicy;
 use App\Policies\EmployeePolicy;
@@ -40,9 +42,33 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Gate::before(function ($user, string $ability) {
+            if ($user instanceof SuperAdmin) {
+                return true;
+            }
+
+            if (method_exists($user, 'hasRole') && $user->hasRole(RoleName::SuperAdmin->value)) {
+                return true;
+            }
+
+            return null;
+        });
+
         $this->configureDefaults();
         $this->configureRateLimiting();
         $this->configurePolicies();
+        $this->configureMigrations();
+    }
+
+    /**
+     * Register migration directories from subdirectories.
+     */
+    protected function configureMigrations(): void
+    {
+        $mainPath = database_path('migrations');
+        $directories = glob($mainPath.'/*', GLOB_ONLYDIR);
+        $paths = array_merge([$mainPath], $directories ?: []);
+        $this->loadMigrationsFrom($paths);
     }
 
     /**

@@ -1,7 +1,8 @@
 import { Link, usePage } from '@inertiajs/react';
-import { ChevronDown, X } from 'lucide-react';
+import { ChevronDown, LogOut, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { superAdminNavigation, webAdminNavigation } from '@/config/admin-navigation';
+import { logout } from '@/routes';
 import type { AdminNavGroup, AdminNavItem } from '@/config/admin-navigation';
 import { cn } from '@/lib/utils';
 import type { Auth } from '@/types';
@@ -79,7 +80,7 @@ function NavItem({
                         'flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-semibold transition',
                         collapsed && 'justify-center px-2',
                         active
-                            ? 'bg-nexlink-primary/10 text-nexlink-primary dark:bg-white/10 dark:text-white'
+                            ? 'bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary font-semibold'
                             : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white'
                     )}
                     aria-expanded={expanded}
@@ -95,6 +96,7 @@ function NavItem({
                     <div className="mt-1 space-y-1 pl-7">
                         {item.children?.map((child) => {
                             const childActive = isItemActive(child, currentUrl);
+                            const ChildIcon = child.icon;
 
                             return (
                                 <Link
@@ -103,13 +105,14 @@ function NavItem({
                                     prefetch
                                     onClick={onNavigate}
                                     className={cn(
-                                        'block rounded-xl px-3 py-2 text-sm transition',
+                                        'flex items-center gap-2 rounded-xl px-3 py-2 text-sm transition',
                                         childActive
-                                            ? 'bg-nexlink-primary text-white shadow-sm'
+                                            ? 'bg-primary text-primary-foreground font-semibold shadow-xs'
                                             : 'text-slate-500 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-400 dark:hover:bg-white/10 dark:hover:text-white'
                                     )}
                                 >
-                                    {child.title}
+                                    {ChildIcon && <ChildIcon className="size-4 shrink-0" aria-hidden="true" />}
+                                    <span>{child.title}</span>
                                 </Link>
                             );
                         })}
@@ -131,7 +134,7 @@ function NavItem({
                 'flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-semibold transition',
                 collapsed && 'justify-center px-2',
                 active
-                    ? 'bg-nexlink-primary text-white shadow-sm shadow-nexlink-primary/25'
+                    ? 'bg-primary text-primary-foreground shadow-sm shadow-primary/25'
                     : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white'
             )}
         >
@@ -186,7 +189,7 @@ export function AdminSidebar({ open, collapsed, onClose, onToggleCollapse }: Pro
                         className={cn('flex items-center gap-3', collapsed && 'justify-center')}
                         onClick={onClose}
                     >
-                        <span className="flex size-11 items-center justify-center rounded-2xl bg-nexlink-primary text-white shadow-lg shadow-nexlink-primary/25">
+                        <span className="flex size-11 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/25">
                             N
                         </span>
                         {!collapsed && (
@@ -197,14 +200,6 @@ export function AdminSidebar({ open, collapsed, onClose, onToggleCollapse }: Pro
                         )}
                     </Link>
                     <div className="flex items-center gap-1">
-                        {/* <button
-                            type="button"
-                            className="hidden rounded-full p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-950 dark:hover:bg-white/10 dark:hover:text-white lg:inline-flex"
-                            onClick={onToggleCollapse}
-                            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-                        >
-                            {collapsed ? <PanelLeftOpen className="size-4" aria-hidden="true" /> : <PanelLeftClose className="size-4" aria-hidden="true" />}
-                        </button> */}
                         <button
                             type="button"
                             className="rounded-full p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-950 dark:hover:bg-white/10 dark:hover:text-white lg:hidden"
@@ -224,12 +219,24 @@ export function AdminSidebar({ open, collapsed, onClose, onToggleCollapse }: Pro
                             </h2>
                             <div className="space-y-1">
                                 {group.items.map((item) => (
-                                    <NavItem key={item.href} item={item} currentUrl={url} onNavigate={onClose} />
+                                    <NavItem key={item.href} item={item} currentUrl={url} onNavigate={onClose} collapsed={collapsed} />
                                 ))}
                             </div>
                         </section>
                     ))}
                 </nav>
+
+                <div className="sticky bottom-0 border-t border-slate-200/80 bg-white/95 px-4 py-4 dark:border-white/10 dark:bg-slate-950/95">
+                    <Link
+                        href={auth.guard === 'super_admin' ? '/admin/logout' : logout()}
+                        method="post"
+                        as="button"
+                        className="flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-300 bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-700 dark:border-slate-700 dark:bg-slate-100 dark:text-slate-950 dark:hover:bg-slate-200"
+                    >
+                        <LogOut className="size-4" />
+                        {!collapsed && 'Sign out'}
+                    </Link>
+                </div>
             </aside>
         </>
     );

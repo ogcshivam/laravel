@@ -1,4 +1,8 @@
 import { Head } from '@inertiajs/react';
+import { Building2, CreditCard, Users } from 'lucide-react';
+import { PageHeader } from '@/components/admin/page-header';
+import { StatCard } from '@/components/admin/stat-card';
+import AdminLayout from '@/layouts/admin-layout';
 
 type Props = {
     stats: {
@@ -14,42 +18,34 @@ export default function AdminDashboard({ stats }: Props) {
             <Head title="Admin Dashboard" />
 
             <div className="space-y-6">
-                <div>
-                    <h1 className="text-2xl font-black tracking-tight text-slate-950 dark:text-white">
-                        Super Admin Dashboard
-                    </h1>
-                    <p className="mt-1 text-sm text-slate-500">
-                        Manage companies and assign products from the Companies menu.
-                    </p>
-                </div>
+                <PageHeader
+                    title="Admin Dashboard"
+                    description="Monitor companies, users, and active product subscriptions."
+                />
 
-                <div className="grid gap-4 sm:grid-cols-3">
-                    <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-                            Companies
-                        </p>
-                        <p className="mt-3 text-3xl font-black text-slate-950 dark:text-white">
-                            {stats.companies}
-                        </p>
-                    </div>
-                    <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-                            Users
-                        </p>
-                        <p className="mt-3 text-3xl font-black text-slate-950 dark:text-white">
-                            {stats.users}
-                        </p>
-                    </div>
-                    <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
-                        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-                            Active plans
-                        </p>
-                        <p className="mt-3 text-3xl font-black text-slate-950 dark:text-white">
-                            {stats.active_plans}
-                        </p>
-                    </div>
-                </div>
+                <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                    <StatCard
+                        label="Companies"
+                        value={stats.companies.toLocaleString()}
+                        icon={Building2}
+                        tone="primary"
+                    />
+                    <StatCard
+                        label="Users"
+                        value={stats.users.toLocaleString()}
+                        icon={Users}
+                        tone="success"
+                    />
+                    <StatCard
+                        label="Active Plans"
+                        value={stats.active_plans.toLocaleString()}
+                        icon={CreditCard}
+                        tone="info"
+                    />
+                </section>
             </div>
         </>
     );
 }
+
+AdminDashboard.layout = (page: React.ReactNode) => <AdminLayout>{page}</AdminLayout>;
